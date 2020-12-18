@@ -1,0 +1,25 @@
+{
+    "name": "alex/friends",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Alex Kirk",
+            "email": "akirk.friends.wordpress@kirk.at"
+        }
+    ],
+	"require": {
+		"php": "^5.6.0||^7.0",
+		"galbar/jsonpath": "dev-master",
+		"sabre/uri": "^2.2"
+	},
+	"require-dev": {
+		"squizlabs/php_codesniffer": "*",
+		"wp-phpunit/wp-phpunit": "*",
+		"phpunit/phpunit": "*",
+		"phpcompatibility/php-compatibility": "*",
+		"wp-coding-standards/wpcs": "*",
+		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
+	},
+	"prefer-stable" : true
+}
