@@ -6,66 +6,69 @@
  */
 
 namespace Fraidyscrape;
+
 use Sabre\Uri;
 use JsonPath\JsonObject;
 
-require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
-function varr( $vars, $x ) {
-	foreach ( explode( ':', $x ) as $var ) {
-		if ( isset( $vars[ $var ] ) ) {
-			$vars = &$vars[ $var ];
-		} else {
-			return '';
+class Functions {
+	public static function varr( $vars, $x ) {
+		foreach ( explode( ':', $x ) as $var ) {
+			if ( isset( $vars[ $var ] ) ) {
+				$vars = &$vars[ $var ];
+			} else {
+				return '';
+			}
 		}
+		return empty( $vars ) ? '' : $vars;
 	}
-	return empty( $vars ) ? '' : $vars;
-}
 
-function varx( $str, $vars ) {
-	if ( ! is_string( $str ) ) {
+	public static function varx( $str, $vars ) {
+		if ( ! is_string( $str ) ) {
+			return $str;
+		}
+
+		$str = preg_replace_callback(
+			'/\${(.+)}/',
+			function ( $x ) use ( $vars ) {
+				$v = self::varx( $x[1], $vars );
+				return self::varr( $vars, $v );
+			},
+			$str
+		);
+
+		$str = preg_replace_callback(
+			'/\$([:\w]+)/',
+			function ( $x ) use ( $vars ) {
+				return self::varr( $vars, $x[1] );
+			},
+			$str
+		);
 		return $str;
 	}
 
-	$str = preg_replace_callback(
-		'/\${(.+)}/',
-		function ( $x ) use ( $vars ) {
-			$v = varx( $x[1], $vars );
-			return varr( $vars, $v );
-		},
-		$str
-	);
-
-	$str = preg_replace_callback(
-		'/\$([:\w]+)/',
-		function ( $x ) use ( $vars ) {
-			return varr( $vars, $x[1] );
-		},
-		$str
-	);
-	return $str;
-}
-
-function endsWith( $haystack, $needle ) {
-    return substr( $haystack, - strlen( $needle ) ) === $needle;
-}
-
-function transformXpath( $path ) {
-	if ( endsWith( $path, 'text()' ) ) {
-		$path = rtrim( substr( $path, 0, -6 ), '/' );
-	}
-	return $path;
-}
-
-function jsonPath( $obj, $path, $asText ) {
-	$jsonObject = new jsonObject( $obj );
-	$r = $jsonObject->get( $path );
-
-	if ( $asText ) {
-		return array_shift( $r );
+	public static function endsWith( $haystack, $needle ) {
+	    return substr( $haystack, - strlen( $needle ) ) === $needle;
 	}
 
-	return $r;
+	public static function transformXpath( $path ) {
+		if ( self::endsWith( $path, 'text()' ) ) {
+			$path = rtrim( substr( $path, 0, -6 ), '/' );
+		}
+		return $path;
+	}
+
+	public static function jsonPath( $obj, $path, $asText ) {
+		$jsonObject = new jsonObject( $obj );
+		$r = $jsonObject->get( $path );
+
+		if ( $asText ) {
+			return array_shift( $r );
+		}
+
+		return $r;
+	}
 }
 
 class Scraper {
@@ -86,7 +89,7 @@ class Scraper {
 
 	private function assign( $options, $additions, $vars, $mods = null, $plain_value = false ) {
 		foreach ( $additions as $id => $val ) {
-			$id = varx( $id, $vars );
+			$id = Functions::varx( $id, $vars );
 
 			if ( ! $val ) {
 				unset( $options[ $id ] );
@@ -94,7 +97,7 @@ class Scraper {
 			}
 
 			if ( ! $plain_value ) {
-				$val = varx( $val, $vars );
+				$val = Functions::varx( $val, $vars );
 			}
 
 			if ( is_array( $mods ) ) {
@@ -310,7 +313,7 @@ class Scraper {
 		$script = null;
 		$fn = function ( $path, $asText ) use ( $obj ) {
 			$path = str_replace( array( '===', '!==' ), array( '==', '!=' ), $path );
-			return jsonPath( $obj, $path, $asText );
+			return Functions::jsonPath( $obj, $path, $asText );
 		};
 
 		if ( isset( $site['accept'] ) ) {
@@ -373,7 +376,7 @@ class Scraper {
 				}
 
 				foreach ( $path as $p ) {
-					$p = transformXpath( $p );
+					$p = Functions::transformXpath( $p );
 					$list = array(); // Reset to array in case it was an empty DOMNodeList
 					if ( $obj instanceof \DOMNodeList ) {
 						foreach ( $obj as $node ) {
@@ -463,7 +466,7 @@ class Scraper {
 			}
 
 			foreach ( $ops as $op ) {
-				$op = varx( $op, $vars );
+				$op = Functions::varx( $op, $vars );
 				if ( ! $op ) {
 					continue;
 				}
@@ -474,7 +477,7 @@ class Scraper {
 				if ( '=' === $op[0] ) {
 					$val = substr( $op, 1 );
 				} elseif ( '&' === $op[0] ) {
-					$val = jsonPath( $vars, '$' . substr( $op, 1 ), $asText );
+					$val = Functions::jsonPath( $vars, '$' . substr( $op, 1 ), $asText );
 				} else {
 					$val = $pathFn( $op, $asText );
 				}

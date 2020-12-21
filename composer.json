@@ -1,11 +1,11 @@
 {
-    "name": "alex/friends",
+    "name": "alex/friends-parser-fraidyscrape",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Alex Kirk",
-            "email": "akirk.friends.wordpress@kirk.at"
+            "email": "akirk.friends-parser-fraidyscrape.wordpress@kirk.at"
         }
     ],
 	"require": {

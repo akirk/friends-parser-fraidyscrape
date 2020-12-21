@@ -1,0 +1,208 @@
+<?php
+/**
+ * Plugin name: Friends Parser Fraidyscrape
+ * Plugin author: Alex Kirk
+ * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
+ * Version: 1.0
+ *
+ * Description: View feeds for websites using Fraidyscrape and potentially support the Friends plugin with that.
+ *
+ * License: GPL2
+ * Text Domain: friends-parser-fraidyscrape
+ * Domain Path: /languages/
+ *
+ * @package Friends_Parser_Fraidyscrape
+ */
+
+/**
+ * This file loads all the dependencies the Friends plugin.
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+add_action(
+	'friends_register_parser',
+	function( Friends_Feed $friends_feed ) {
+		require_once __DIR__ . '/class-friends-feed-parser-fraidyscrape.php';
+		$friends_feed->register_parser( 'fraidyscrape', new Friends_Feed_Parser_Fraidyscrape );
+	}
+);
+
+/**
+ * Display an about page for the plugin.
+ *
+ * @param      bool $display_about_friends  The display about friends section.
+ */
+function friends_parser_fraidyscrape_about_page( $display_about_friends = false ) {
+	?><h1><?php _e( 'Friends Parser Fraidyscrape', 'friends-parser-fraidyscrape' ); ?></h1>
+
+	<?php if ( $display_about_friends ) : ?>
+		<p>
+			<?php
+			echo wp_kses(
+				// translators: %s: URL to the Friends Plugin page on WordPress.org.
+				sprintf( __( 'The Friends plugin is all about connecting with friends and news. Learn more on its <a href=%s>plugin page on WordPress.org</a>.', 'friends-parser-fraidyscrape' ), '"https://wordpress.org/plugins/friends" target="_blank" rel="noopener noreferrer"' ),
+				array(
+					'a' => array(
+						'href'   => array(),
+						'rel'    => array(),
+						'target' => array(),
+					),
+				)
+			);
+			?>
+		</p>
+	<?php endif; ?>
+	<p>
+	<?php
+	echo wp_kses(
+		// translators: %s: URL to the Fraidyscrape.
+		sprintf( __( 'This parser is powered by <a href=%1$s>a PHP port</a> of the open source project <a href=%2$s>Fraidyscrape</a> and provides support to parse the following properties:', 'friends-parser-fraidyscrape' ), '"https://github.com/akirk/friends-parser-fraidyscrape" target="_blank" rel="noopener noreferrer"', '"https://github.com/kickscondor/fraidyscrape" target="_blank" rel="noopener noreferrer"' ),
+		array(
+			'a' => array(
+				'href'   => array(),
+				'rel'    => array(),
+				'target' => array(),
+			),
+		)
+	);
+	?>
+	</p>
+	<ul>
+		<?php
+			$defs = json_decode( file_get_contents( __DIR__ . '/social.json' ), true );
+			$domains = array();
+			foreach ( $defs as $key => $rules ) {
+				if ( false === strpos( $key, ':' ) ) {
+					continue;
+				}
+				list( $domain, $path ) = explode( ':', $key, 2 );
+				if ( ! isset( $domains[ $domain ] ) ) {
+					$domains[ $domain ] = array();
+				}
+				$domains[ $domain ][] = $path;
+			}
+			ksort( $domains );
+			foreach ( $domains as $domain => $paths ) {
+				?><li><a href="https://<?php echo esc_attr( $domain ); ?>"><?php echo esc_html( ucfirst( $domain ) ); ?></a><ol>
+					<?php foreach ( $paths as $path ) : ?>
+						<li><a href="https://<?php echo esc_attr( $domain . '/' . $path ); ?>"><?php echo esc_html( $path ); ?></li>
+					<?php endforeach; ?>
+					</ol></li><?php
+			}
+		?>
+	</ul>
+	<?php
+}
+
+/**
+ * Display an about page for the plugin with the friends section.
+ */
+function friends_parser_fraidyscrape_about_page_with_friends_about() {
+	return friends_parser_fraidyscrape_about_page( true );
+}
+
+/**
+ * Displays the Fraidyscrape Tester.
+ */
+function friends_parser_fraidyscrape_tester() {
+	$url = false;
+	if ( isset( $_GET['_wpnonce'], $_GET['url'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'friends_parser_fraidyscrape_tester' ) ) {
+		$url = $_GET['url'];
+		if ( ! parse_url( $url, PHP_URL_SCHEME ) ) {
+			$url = 'https://' . $url;
+		}
+	}
+	?>
+	<h1><?php _e( 'Fraidyscrape Tester', 'friends-parser-fraidyscrape' ); ?></h1>
+	<p><?php _e( 'Here you can test what the parser makes of the URL you give it. ', 'friends-parser-fraidyscrape' ); ?></h1>
+
+	<form>
+		<input type="hidden" name="page" value="<?php echo esc_attr( $_GET['page'] ); ?>">
+		<?php wp_nonce_field( 'friends_parser_fraidyscrape_tester', '_wpnonce', false ); ?>
+		<label><?php _e( 'Enter a URL:', 'friends-parser-fraidyscrape' ); ?> <input type="text" name="url" value="<?php echo esc_attr( $url ); ?>" placeholer="https://" autofocus /></label>
+		<input type="submit" class="button button-primary" value="<?php echo esc_attr_x( 'Parse Now', 'button', 'friends-parser-fraidyscrape' ); ?>" />
+	</form>
+	<?php
+	if ( $url ) {
+		if ( ! class_exists( 'Friends_Feed_Parser_fraidyscrape' ) ) {
+			if ( ! class_exists( 'Friends_Feed_Parser' ) ) {
+				require_once __DIR__ . '/class-friends-feed-parser.php';
+			}
+			require_once __DIR__ . '/class-friends-feed-parser-fraidyscrape.php';
+		}
+		$parser = new Friends_Feed_Parser_fraidyscrape;
+		$items = $parser->fetch_feed( $_GET['url'] );
+		?>
+		<h2>
+			<?php
+			// translators: %s is a URL to be displayed verbatim.
+			echo esc_html( sprintf( __( 'Parsing Result for %s', 'friends-parser-fraidyscrape' ), $url ) );
+			?>
+		</h2>
+		<?php
+		if ( ! is_wp_error( $items ) && empty( $items ) ) {
+			$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends-parser-fraidyscrape' ) );
+		}
+
+		if ( is_wp_error( $items ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>
+			</div>
+			<?php
+			exit;
+		}
+		?>
+		<h3><?php _e( 'Items in the Feed', 'friends-parser-fraidyscrape' ); ?></h3>
+		<ul id="items">
+			<?php
+			foreach ( $items as $item ) {
+				?>
+				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
+				<?php
+			}
+			?>
+		</ul>
+		<?php
+	}
+}
+
+add_action(
+	'admin_menu',
+	function () {
+		// Only show the menu if installed standalone.
+		$friends_settings_exist = '' !== menu_page_url( 'friends-settings', false );
+		if ( $friends_settings_exist ) {
+			add_submenu_page(
+				'friends-settings',
+				__( 'Plugin: Fraidyscrape', 'friends-parser-fraidyscrape' ),
+				__( 'Plugin: Fraidyscrape', 'friends-parser-fraidyscrape' ),
+				'administrator',
+				'friends-fraidyscrape',
+				'friends_parser_fraidyscrape_about_page'
+			);
+		} else {
+			add_menu_page( 'friends', __( 'Friends', 'friends-parser-fraidyscrape' ), 'administrator', 'friends-settings', null, 'dashicons-groups', 3.73 );
+			add_submenu_page(
+				'friends-settings',
+				__( 'About', 'friends-parser-fraidyscrape' ),
+				__( 'About', 'friends-parser-fraidyscrape' ),
+				'administrator',
+				'friends-settings',
+				'friends_parser_fraidyscrape_about_page_with_friends_about'
+			);
+		}
+
+		if ( apply_filters( 'friends_debug', false ) || ! $friends_settings_exist ) {
+			add_submenu_page(
+				'friends-settings',
+				__( 'Fraidyscrape Tester', 'friends-parser-fraidyscrape' ),
+				__( 'Fraidyscrape Tester', 'friends-parser-fraidyscrape' ),
+				'administrator',
+				'friends-fraidyscrape-tester',
+				'friends_parser_fraidyscrape_tester'
+			);
+		}
+	},
+	50
+);
