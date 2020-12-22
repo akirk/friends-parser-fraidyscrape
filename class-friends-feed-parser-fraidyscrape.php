@@ -47,7 +47,18 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 
 		if ( ! isset( $fraidyscrape ) ) {
 			include_once __DIR__ . '/class-fraidyscrape.php';
-			$defs = json_decode( file_get_contents( __DIR__ . '/social.json' ), true );
+			$cache_key = 'friends_parser_fraidyscrape_social_json_v1';
+			$social_json = get_site_transient( $cache_key );
+			if ( ! $social_json ) {
+				$social_json = file_get_contents( __DIR__ . '/social.json' );
+				$res = wp_safe_remote_get( 'https://fraidyc.at/defs/social.json' );
+				if ( 200 === wp_remote_retrieve_response_code( $res ) ) {
+					$social_json = wp_remote_retrieve_body( $res );
+				}
+				set_site_transient( $cache_key, $social_json, 86400 );
+			}
+
+			$defs = json_decode( $social_json, true );
 			$fraidyscrape = new \Fraidyscrape\Scraper( $defs );
 		}
 		return $fraidyscrape;
