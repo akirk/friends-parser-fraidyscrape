@@ -65,6 +65,14 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			return $feed_details;
 		}
 
+		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+
+		switch ( $host ) {
+			case 'twitter.com':
+				$feed_details['post-format'] = 'status';
+				break;
+		}
+
 		return $feed_details;
 	}
 
