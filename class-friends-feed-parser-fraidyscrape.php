@@ -120,12 +120,11 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 					);
 
 					if ( is_wp_error( $res ) ) {
-						var_dump( $res );
-						exit;
+						return $res;
 					}
 
 					set_site_transient( $cache_key, $res, $expiration );
-				} else {
+				} elseif ( apply_filters( 'friends_debug', false ) ) {
 					echo 'using cache for ', $req['url'], '<br>';
 				}
 
