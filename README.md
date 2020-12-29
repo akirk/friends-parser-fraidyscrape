@@ -1,6 +1,6 @@
 # Friends Parser Fraidyscrape
 
-This is a PHP port of the JavaScript extractor Fraidyscrape:
+This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the [Friends Plugin](https://wordpress.org/plugins/friends) which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.
 
 # Fraidyscrape
 
