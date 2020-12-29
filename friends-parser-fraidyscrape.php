@@ -34,7 +34,36 @@ add_action(
  * @param      bool $display_about_friends  The display about friends section.
  */
 function friends_parser_fraidyscrape_about_page( $display_about_friends = false ) {
+	$nonce_value = 'friends-parser-fraidyscrape';
+	if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], $nonce_value ) ) {
+		update_option( 'friends-parser-fraidyscrape_confidence', intval( $_POST['default_confidence'] ) );
+	}
+
 	?><h1><?php _e( 'Friends Parser Fraidyscrape', 'friends-parser-fraidyscrape' ); ?></h1>
+
+	<form method="post">
+		<?php wp_nonce_field( $nonce_value ); ?>
+		<table class="form-table">
+			<tbody>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Default Confidence', 'friends' ); ?></th>
+					<td>
+						<fieldset>
+							<label for="default_confidence">
+								<input name="default_confidence" type="number" id="default_confidence" placeholder="10" value="<?php echo esc_attr( get_option( 'friends-parser-fraidyscrape_confidence', 10 ) ); ?>" min="0" max="100" />
+							</label>
+							<p class="description">
+								<?php _e( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.' ); ?>
+							</p>
+						</fieldset>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p class="submit">
+			<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes', 'friends-parser-fraidyscrape' ); ?>">
+		</p>
+	</form>
 
 	<?php if ( $display_about_friends ) : ?>
 		<p>
@@ -72,24 +101,26 @@ function friends_parser_fraidyscrape_about_page( $display_about_friends = false 
 		<?php
 			$defs = json_decode( file_get_contents( __DIR__ . '/social.json' ), true );
 			$domains = array();
-			foreach ( $defs as $key => $rules ) {
-				if ( false === strpos( $key, ':' ) ) {
-					continue;
-				}
-				list( $domain, $path ) = explode( ':', $key, 2 );
-				if ( ! isset( $domains[ $domain ] ) ) {
-					$domains[ $domain ] = array();
-				}
-				$domains[ $domain ][] = $path;
+		foreach ( $defs as $key => $rules ) {
+			if ( false === strpos( $key, ':' ) ) {
+				continue;
 			}
+			list( $domain, $path ) = explode( ':', $key, 2 );
+			if ( ! isset( $domains[ $domain ] ) ) {
+				$domains[ $domain ] = array();
+			}
+			$domains[ $domain ][] = $path;
+		}
 			ksort( $domains );
-			foreach ( $domains as $domain => $paths ) {
-				?><li><a href="https://<?php echo esc_attr( $domain ); ?>"><?php echo esc_html( ucfirst( $domain ) ); ?></a><ol>
-					<?php foreach ( $paths as $path ) : ?>
+		foreach ( $domains as $domain => $paths ) {
+			?>
+				<li><a href="https://<?php echo esc_attr( $domain ); ?>"><?php echo esc_html( ucfirst( $domain ) ); ?></a><ol>
+				<?php foreach ( $paths as $path ) : ?>
 						<li><a href="https://<?php echo esc_attr( $domain . '/' . $path ); ?>"><?php echo esc_html( $path ); ?></li>
 					<?php endforeach; ?>
-					</ol></li><?php
-			}
+					</ol></li>
+					<?php
+		}
 		?>
 	</ul>
 	<?php

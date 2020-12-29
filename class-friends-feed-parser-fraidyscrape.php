@@ -35,11 +35,11 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 		if ( empty( $tasks ) ) {
 			return 0;
 		}
-		if ( empty( $tasks->queue ) || ( 1 === count( $tasks->queue ) && 'default' === $tasks->queue[0] ) ){
+		if ( empty( $tasks->queue ) || ( 1 === count( $tasks->queue ) && 'default' === $tasks->queue[0] ) ) {
 			return 0;
 		}
 
-		return 13;
+		return get_option( 'friends-parser-fraidyscrape_confidence', 10 );
 	}
 
 	private function get_fraidyscrape() {
@@ -141,10 +141,10 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			if ( empty( $item['url'] ) ) {
 				continue;
 			}
-			$feed_item       = (object) array(
+			$feed_item = (object) array(
 				'permalink'   => $item['url'],
 				'title'       => $item['title'] ?? '',
-				'title'     => implode( PHP_EOL, $item['text'] ?? array() ),
+				'title'       => implode( PHP_EOL, $item['text'] ?? array() ),
 				'post-format' => 'standard',
 			);
 			if ( $item['publishedAt'] instanceof DateTime ) {
@@ -154,9 +154,12 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			$feed_items[] = $feed_item;
 		}
 
-		usort( $feed_items, function( $a, $b ) {
-			return $b->date <=> $a->date;
-		});
+		usort(
+			$feed_items,
+			function( $a, $b ) {
+				return $b->date <=> $a->date;
+			}
+		);
 
 		return $feed_items;
 	}
