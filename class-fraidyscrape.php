@@ -484,7 +484,6 @@ class Scraper {
 
 				if ( is_array( $cmd ) && isset( $cmd['match'] ) ) {
 					if ( is_array( $val ) && $val['match'] && preg_match( '/' . preg_quote( $cmd['match'], '/' ) . '/', $val, $match ) ) {
-						var_dump($match);exit;
 						$val = isset( $match[1] ) ? $match[1] : $val;
 					} else {
 						continue;

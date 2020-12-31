@@ -160,6 +160,9 @@ function friends_parser_fraidyscrape_tester() {
 			if ( ! class_exists( 'Friends_Feed_Parser' ) ) {
 				require_once __DIR__ . '/class-friends-feed-parser.php';
 			}
+			if ( ! class_exists( 'Friends_Feed_Item' ) ) {
+				require_once __DIR__ . '/class-friends-feed-item.php';
+			}
 			require_once __DIR__ . '/class-friends-feed-parser-fraidyscrape.php';
 		}
 		$parser = new Friends_Feed_Parser_fraidyscrape;

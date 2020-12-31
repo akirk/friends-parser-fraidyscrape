@@ -23,13 +23,14 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
-	 * @param      string $url        The url.
-	 * @param      string $mime_type  The mime type.
-	 * @param      string $title      The title.
+	 * @param      string      $url        The url.
+	 * @param      string      $mime_type  The mime type.
+	 * @param      string      $title      The title.
+	 * @param      string|null $content    The content, it can't be assumed that it's always available.
 	 *
 	 * @return     int  Return 0 if unsupported, a positive value representing the confidence for the feed, use 10 if you're reasonably confident.
 	 */
-	public function feed_support_confidence( $url, $mime_type, $title ) {
+	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) {
 		$f = $this->get_fraidyscrape();
 		$tasks = $f->detect( $url );
 		if ( empty( $tasks ) ) {
@@ -141,11 +142,12 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			if ( empty( $item['url'] ) ) {
 				continue;
 			}
-			$feed_item = (object) array(
-				'permalink'   => $item['url'],
-				'title'       => $item['title'] ?? '',
-				'title'       => implode( PHP_EOL, $item['text'] ?? array() ),
-				'post-format' => 'standard',
+			$feed_item = new Friends_Feed_Item(
+				array(
+					'permalink' => $item['url'],
+					'title'     => $item['title'] ?? '',
+					'content'   => implode( PHP_EOL, $item['text'] ?? array() ),
+				)
 			);
 			if ( $item['publishedAt'] instanceof DateTime ) {
 				$feed_item->date = $item['publishedAt']->format( 'Y-m-d H:i:s' );
