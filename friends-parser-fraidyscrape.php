@@ -52,7 +52,7 @@ function friends_parser_fraidyscrape_about_page( $display_about_friends = false 
 								<input name="default_confidence" type="number" id="default_confidence" placeholder="10" value="<?php echo esc_attr( get_option( 'friends-parser-fraidyscrape_confidence', 10 ) ); ?>" min="0" max="100" />
 							</label>
 							<p class="description">
-								<?php _e( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.' ); ?>
+								<?php _e( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' ); ?>
 							</p>
 						</fieldset>
 					</td>
