@@ -1,14 +1,14 @@
 {
   "domains": {
     "api.twitch.tv": {"headers:Client-Id": "vnvcshh0aehfkq0bvu6rzpbtaf25et",
-      "headers:Authorization": "Bearer 7b527rlibrh77pkt111abt0n818nfl"},
+      "headers:Authorization": "Bearer mjal5b1xpg5k47awdcx2qv9f9v0sut"},
     "api.twitter.com": {"headers:Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
       "headers:DNT": "1", "headers:Content-Type": "application/json",
       "headers:X-Twitter-Active-User": "yes", "headers:Authority": "api.twitter.com",
       "headers:Accept-Language": "en-US,en;q=0.9", "headers:Accept": "*/*"},
-    "m.facebook.com": {"headers:User-Agent": "curl/7.58.0"},
-    "www.instagram.com": {"headers:User-Agent": "curl/7.58.0"},
-    "www.youtube.com": {"headers:User-Agent": "curl/7.58.0"}
+    "api.tumblr.com": {"query:api_key": "fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4"},
+    "m.facebook.com": {"headers:User-Agent": "curl/7.68.0"},
+    "www.youtube.com": {"headers:User-Agent": "curl/7.68.0"}
   },
 
   "default": {
@@ -166,6 +166,7 @@
     "acceptHtml": [
       {"var": "out:title", "op": "//head/title/text()"},
       {"op": "//meta[@name='generator' and @content='TiddlyWiki']", "use": "tiddlywiki"},
+      {"op": "//head/script[@id='versionArea' and contains(text(), 'TiddlyWiki')]", "use": "tiddlywiki-classic"},
       {"op": ["//link[(@rel='alternate' or @rel='feed') and (@type='application/atom+xml' or @type='application/rss+xml' or @type='application/json' or @type='text/plain') and string-length(@href) > 0]",
               "//a[contains(concat(@href, ' ', text()), 'rss') or contains(concat(@href, ' ', text()), 'feed') and string-length(@href) > 0]"],
        "var": "out:sources", "acceptHtml": [
@@ -196,6 +197,22 @@
         {"var": "title", "op": "@title"},
         {"var": "out:publishedAt", "op": "@created", "mod": ["date"]},
         {"var": "out:updatedAt", "op": "@modified", "mod": ["date"]},
+        {"var": "out:url", "op": "=$title", "mod": ["slug", "url"]},
+        {"var": "out:title", "op": "=$title"}
+      ]}
+    ]
+  },
+
+  "tiddlywiki-classic": {
+    "acceptHtml": [
+      {"var": "out:title", "op": "//head/title/text()"},
+      {"var": "out:photos:avatar", "op": ["//head/link[@rel='shortcut icon']/@href"], "mod": ["url"]},
+      {"var": "out:flags", "op": "=COMPLETE"},
+      {"op": "//div[@id='storeArea']/div[not(starts-with(@title, concat('$', ':/'))) and @created]",
+       "var": "out:posts", "acceptHtml": [
+        {"var": "title", "op": "@title"},
+        {"var": "out:publishedAt", "op": "@created", "mod": ["int", "*100", "uppercase", "date"]},
+        {"var": "out:updatedAt", "op": "@modified", "mod": ["int", "*100", "uppercase", "date"]},
         {"var": "out:url", "op": "=$title", "mod": ["slug", "url"]},
         {"var": "out:title", "op": "=$title"}
       ]}
@@ -281,6 +298,7 @@
         {"var": "out:url", "op": "=https://www.facebook.com/story.php?story_fbid=$story&id=$page"},
         {"var": "out:author", "op": ".//h3//strong[1]/a/text()"},
         {"var": "out:html", "op": [".//div/span", "."]},
+        {"var": "out:graphic", "op": "//img/@src"},
         {"var": "out:publishedAt", "op": "=$obj", "match": "publish_time%22%3A([0-9]+)%2C",
          "mod": ["int", "*1000", "date"]}
       ]}
@@ -460,19 +478,40 @@
   },
 
   "tumblr.com:user": {
-    "match": "^([\\-\\.\\w]+)\\.tumblr\\.com\\/rss",
+    "match": "^([\\-\\.\\w]+)\\.tumblr\\.com(\\/|$)",
     "arguments": [0, {"var": "user"}],
-    "patch": [
-      {"var": "out:author", "op": "=$user"},
-      {"var": "out:posts", "op": "$.posts.*", "patch": [
-        {"var": "out", "op": "$"},
-        {"op": "$.html", "acceptHtml": [
-          {"var": "out:title"},
-          {"var": "out:author", "op": "/p/a[@class='tumblr_blog']"}
-        ]}
+    "url": "https://api.tumblr.com/v2/blog/$user.tumblr.com/posts",
+    "rules": {
+      "entry": [
+        {"var": "id",                "op": ["$.trail[0].post.id", "$.id_string"]},
+        {"var": "author",            "op": ["$.trail[0].blog.name", "$.blog_name"]},
+        {"var": "out:title",         "op": ["$.title", "$.summary", "$.date"]},
+        {"var": "out:author",        "op": "=$author"},
+        {"var": "out:html",          "op": "$.body"},
+        {"var": "out:url",           "op": "=https://$author.tumblr.com/post/$id", "mod": ["url"]},
+        {"var": "out:publishedAt",   "op": "$.timestamp",
+          "mod": ["int", "*1000", "date"]}
+      ]
+    },
+    "acceptJson": [
+      {"var": "out:title",  "op": "$.response.blog.title"},
+      {"var": "out:author", "op": "$.response.blog.name"},
+      {"var": "out:url",    "op": "$.response.blog.url"},
+      {"op": "$.response.blog.avatar.*", "acceptJson": [
+        {"var": "width", "op": "$.width"},
+        {"var": "height", "op": "$.height"},
+        {"var": "sizes", "op": "=${width}x${height}"},
+        {"var": "out:photos:$sizes", "op": "$.url", "mod": ["url"]}
+      ]},
+      {"var": "out:description", "op": "$.response.blog.description"},
+      {"op": "$.response.posts[?(@.is_pinned !== true)]", "var": "out:posts", "acceptJson": [
+        {"rule": "entry"}
+      ]},
+      {"op": "$.response.posts[?(@.is_pinned === true)]", "var": "out:status", "acceptJson": [
+        {"var": "out:type", "op": "=pinned"},
+        {"rule": "entry"}
       ]}
-    ],
-    "accept": ["rss"]
+    ]
   },
 
   "tiktok.com:profile": {
@@ -480,10 +519,10 @@
     "arguments": [0, 0, {"var": "user"}],
     "url": "https://www.tiktok.com/$user",
     "render": [{
-      "match": "^m\\.tiktok\\.com\\/api\\/item_list.+&id=(\\d+)",
-      "validate": ["userId"],
+      "match": "^m\\.tiktok\\.com\\/api\\/(?:post\\/)?item_list.+&secUid=(\\w+)",
+      "validate": ["secUid"],
       "acceptJson": [
-        {"op": "$.items.*", "var": "out:posts", "acceptJson": [
+        {"op": ["$.itemList.*", "$.items.*"], "var": "out:posts", "acceptJson": [
           {"var": "out:title", "op": "$.desc"},
           {"var": "itemId", "op": "$.id"},
           {"var": "username", "op": "$.author.uniqueId"},
@@ -613,6 +652,13 @@
     ]
   },
 
+  "vimeo.com:user": {
+    "match": "^vimeo\\.com\\/([-\\w]+)/?$",
+    "arguments": [0, {"var": "user"}],
+    "url": "https://vimeo.com/$user/videos/rss",
+    "accept": ["rss"]
+  },
+
   "youtube.com:feed": {
     "match": "^youtube\\.com\\/channel\\/([-\\w]+)",
     "arguments": [0, {"var": "id"}],
@@ -649,6 +695,19 @@
     ]
   },
 
+  "carrd.co:user": {
+    "match": "^(\\w+)\\.carrd\\.co/?$",
+    "arguments": [0, {"var": "username"}],
+    "acceptHtml": [
+      {"var": "out:title", "op": "//head/title/text()"},
+      {"var": "out:photos:avatar", "op": "//meta[@property='og:image']/@content"},
+      {"op": "//li/a[starts-with(@href, 'http')]", "var": "out:rels", "acceptHtml": [
+        {"var": "out:url",   "op": "@href", "mod": ["url"]},
+        {"var": "out:title", "op": ["./span/text()"]}
+      ]}
+    ]
+  },
+
   "github.com:user": {
     "match": "^github\\.com/([-\\w]+)/?$",
     "request": {"headers:Accept": "application/atom+xml"},
@@ -677,6 +736,45 @@
     "accept": ["rss"]
   },
 
+  "futureland.tv:user": {
+    "match": "^futureland\\.tv\\/([-\\w]+)(\\/(stream)?)?$",
+    "arguments": [0, {"var": "user"}],
+    "url": "https://futureland.tv/api/users/$user/entries",
+    "acceptJson": [
+      {"var": "out:title", "op": "=Futureland: $user"},
+      {"var": "out:photos:avatar", "op": "$.list[0].user.avatarLink"},
+      {"op": "$.list.*", "var": "out:posts", "acceptJson": [
+        {"var": "id", "op": "$.id"},
+        {"var": "slug", "op": "$.journal.slug"},
+        {"var": "out:url", "op": "=https://futureland.tv/$user/$slug/$id"},
+        {"var": "out:publishedAt", "op": "$.createdAt"},
+        {"var": "out:updatedAt", "op": "$.updatedAt"},
+        {"var": "out:graphic:thumb", "op": "$.preview_link"},
+        {"var": "out:text", "op": "$.notes"}
+      ]}
+    ]
+  },
+
+  "futureland.tv:journal": {
+    "match": "^futureland\\.tv\\/([-\\w]+)\\/([-\\w]+)\\/?$",
+    "arguments": [0, {"var": "user"}, {"var": "journal"}],
+    "url": "https://futureland.tv/api/users/$user/journals/$journal",
+    "acceptJson": [
+      {"var": "out:title", "op": "$.title"},
+      {"var": "out:photos:avatar", "op": "$.iconLink"},
+      {"var": "out:description", "op": "$.description"},
+      {"op": "$.entries.*", "var": "out:posts", "acceptJson": [
+        {"var": "id", "op": "$.id"},
+        {"var": "author", "op": "$.user.futureland_user"},
+        {"var": "out:url", "op": "=https://futureland.tv/$author/$journal/$id"},
+        {"var": "out:publishedAt", "op": "$.createdAt"},
+        {"var": "out:updatedAt", "op": "$.updatedAt"},
+        {"var": "out:graphic:thumb", "op": "$.preview_link"},
+        {"var": "out:text", "op": "$.notes"}
+      ]}
+    ]
+  },
+
   "legiblenews.com:archives": {
     "match": "^legiblenews\\.com(/|$)",
     "url": "https://legiblenews.com/archive.html",
@@ -686,6 +784,21 @@
         {"var": "out:url", "op": "./@href", "mod": ["url"]},
         {"var": "out:publishedAt", "op": "./text()", "mod": ["date"]},
         {"var": "out:title", "op": "./text()"}
+      ]}
+    ]
+  },
+
+  "linktr.ee:user": {
+    "match": "^linktr\\.ee/(.+)",
+    "arguments": [0, {"var": "username"}],
+    "acceptHtml": [
+      {"var": "out:title", "op": "//head/title/text()"},
+      {"op": "//script[@id='__NEXT_DATA__']/text()", "match": ".", "acceptJson": [
+        {"var": "out:photos:avatar", "op": "$.props.pageProps.account.profilePictureUrl"},
+        {"op": "$.props.pageProps.account.links", "var": "out:rels", "acceptJson": [
+          {"var": "out:url",   "op": "$.url", "mod": ["url"]},
+          {"var": "out:title", "op": "$.title"}
+        ]}
       ]}
     ]
   },
