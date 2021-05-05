@@ -102,7 +102,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 		$expiration = 3500;
 
 		$req = true;
-		$cookies = array();
+		$feed = array();
 		while ( true ) {
 			$req = $f->nextRequest( $tasks );
 			if ( ! $req ) {
@@ -110,7 +110,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			}
 
 			if ( $req['render'] ) {
-				$obj = render( $req, $tasks );
+				// $obj = render( $req, $tasks );
 			} else {
 				$cache_key = sha1( $req['url'] . serialize( $req['options'] ) );
 				$res = get_site_transient( $cache_key );
@@ -134,7 +134,9 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 				$obj = $f->scrape( $tasks, $req, $res );
 			}
 
-			$feed = $obj['out'];
+			if ( isset( $obj['out']) ) {
+				$feed = $obj['out'];
+			}
 		}
 
 		$feed_items = array();

@@ -295,16 +295,14 @@ class Scraper {
 	}
 
 	public function scanSite( &$vars, $site, $obj ) {
-		$oldNs = $vars['namespaces'];
-		$oldRules = $vars['rules'];
-
-		$vars['namespaces'] = $site['namespaces'];
-		$vars['rules'] = $site['rules'];
+		$swap = array( 'namespaces', 'rules' );
+		foreach ( $swap as $k ) {
+			if ( isset( $site[$k] ) ) {
+				$vars[$k] = $site[$k];
+			}
+		}
 
 		$v = $this->scan( $vars, $site, $obj );
-
-		$site['namespaces'] = $oldNs;
-		$site['rules'] = $oldRules;
 
 		return $v;
 	}
@@ -435,7 +433,9 @@ class Scraper {
 					$vars['index'] = $i;
 					$this->scan( $vars, $site, $el );
 					if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
-						$out[] = $vars['out'];
+						if ( isset($vars['out'] ) ) {
+							$out[] = $vars['out'];
+						}
 					}
 				}
 				if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
@@ -459,7 +459,10 @@ class Scraper {
 				}
 			}
 
-			$ops = $cmd['op'];
+			$ops = array();
+			if ( isset( $cmd['op'] ) ) {
+				$ops = $cmd['op'];
+			}
 			$val = null;
 			if ( ! is_array( $ops ) ) {
 				$ops = array( $ops );
@@ -483,20 +486,21 @@ class Scraper {
 				}
 
 				if ( is_array( $cmd ) && isset( $cmd['match'] ) ) {
-					if ( is_array( $val ) && $val['match'] && preg_match( '/' . preg_quote( $cmd['match'], '/' ) . '/', $val, $match ) ) {
+					if ( is_array( $val ) && isset( $val['match'] ) && $val['match'] && preg_match( '/' . preg_quote( $cmd['match'], '/' ) . '/', $val['match'], $match ) ) {
 						$val = isset( $match[1] ) ? $match[1] : $val;
 					} else {
 						continue;
 					}
 				}
 
-				if ( isset( $this->defs[ $cmd['use'] ] ) && strlen( $val ) > 0 ) {
+				if ( isset( $cmd['use'] ) && isset( $this->defs[ $cmd['use'] ] ) && strlen( $val ) > 0 ) {
 					$use = $this->defs[ $cmd['use'] ];
 					return $this->scanSite( $vars, $use, $node );
 				}
 
 				// If there is a nested ruleset, process it.
 				if ( $hasChildren ) {
+					$v = $vars;
 					if ( isset( $cmd['var'] ) ) {
 						if ( '*' !== $cmd['var'] ) {
 							unset( $vars['out'] );
@@ -506,11 +510,12 @@ class Scraper {
 					}
 
 					if ( $val ) {
-						$this->scan( $vars, $cmd, $val );
-					}
+						$v = $this->scan( $vars, $cmd, $val );
 
-					if ( isset( $cmd['var'] ) && '*' !== $cmd['var'] ) {
-						$val = $vars['out'];
+						if ( isset( $cmd['var'] ) && '*' !== $cmd['var'] ) {
+							$val = $vars['out'];
+							$vars = $v;
+						}
 					}
 				}
 
