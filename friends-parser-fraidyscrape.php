@@ -3,7 +3,7 @@
  * Plugin name: Friends Parser Fraidyscrape
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Description: Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).
  *
@@ -215,7 +215,7 @@ add_action(
 				'friends_parser_fraidyscrape_about_page'
 			);
 		} else {
-			add_menu_page( 'friends', __( 'Friends', 'friends' ), 'administrator', 'friends-settings', null, 'dashicons-groups', 3.73 );
+			add_menu_page( 'friends', __( 'Friends', 'friends' ), 'administrator', 'friends-settings', null, 'dashicons-groups', 3 );
 			add_submenu_page(
 				'friends-settings',
 				__( 'About', 'friends' ),
