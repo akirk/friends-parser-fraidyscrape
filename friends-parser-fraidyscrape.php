@@ -3,7 +3,7 @@
  * Plugin name: Friends Parser Fraidyscrape
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * Description: Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).
  *
