@@ -119,7 +119,7 @@ class JsonObject
      */
     function __construct($json = null, $smartGet = false)
     {
-        if ($json === null) {
+        if (!$json) {
             $this->jsonObject = array();
         } else if (is_string($json)) {
             $this->jsonObject = json_decode($json, true);
