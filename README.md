@@ -21,3 +21,8 @@ micro-famous, macro-fearful Web research tool [Fraidycat](https://fraidyc.at/).
 > It is presently quite a dark art to figure out. No one really knows what it does!
 
 This plugin is meant to be used with the [Friends plugin](https://github.com/akirk/friends/).
+
+## Changelog
+
+### 1.1
+- Update for Friends 2.0

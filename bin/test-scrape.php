@@ -16,7 +16,7 @@ $tasks = $f->detect( 'https://twitter.com/f' );
 $req = true;
 $cookies = array();
 while ( true ) {
-	$req = $f->nextRequest( $tasks );
+	$req = $f->next_request( $tasks );
 	if ( ! $req ) {
 		break;
 	}

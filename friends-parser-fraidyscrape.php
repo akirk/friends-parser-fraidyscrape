@@ -3,7 +3,7 @@
  * Plugin name: Friends Parser Fraidyscrape
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
- * Version: 1.0.3
+ * Version: 1.1
  *
  * Description: Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).
  *
@@ -20,10 +20,10 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action(
-	'friends_register_parser',
-	function( Friends_Feed $friends_feed ) {
-		require_once __DIR__ . '/class-friends-feed-parser-fraidyscrape.php';
-		$friends_feed->register_parser( 'fraidyscrape', new Friends_Feed_Parser_Fraidyscrape );
+	'friends_load_parsers',
+	function( Friends\Feed $friends_feed ) {
+		require_once __DIR__ . '/class-feed-parser-fraidyscrape.php';
+		$friends_feed->register_parser( 'fraidyscrape', new Friends\Feed_Parser_Fraidyscrape );
 	}
 );
 
@@ -38,7 +38,7 @@ function friends_parser_fraidyscrape_about_page( $display_about_friends = false 
 		update_option( 'friends-parser-fraidyscrape_confidence', intval( $_POST['default_confidence'] ) );
 	}
 
-	?><h1><?php _e( 'Friends Parser Fraidyscrape', 'friends' ); ?></h1>
+	?><h1><?php esc_html_e( 'Friends Parser Fraidyscrape', 'friends' ); ?></h1>
 
 	<form method="post">
 		<?php wp_nonce_field( $nonce_value ); ?>
@@ -52,7 +52,7 @@ function friends_parser_fraidyscrape_about_page( $display_about_friends = false 
 								<input name="default_confidence" type="number" id="default_confidence" placeholder="10" value="<?php echo esc_attr( get_option( 'friends-parser-fraidyscrape_confidence', 10 ) ); ?>" min="0" max="100" />
 							</label>
 							<p class="description">
-								<?php _e( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' ); ?>
+								<?php esc_html_e( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' ); ?>
 							</p>
 						</fieldset>
 					</td>
@@ -144,27 +144,27 @@ function friends_parser_fraidyscrape_tester() {
 		}
 	}
 	?>
-	<h1><?php _e( 'Fraidyscrape Tester', 'friends' ); ?></h1>
-	<p><?php _e( 'Here you can test what the parser makes of the URL you give it. ', 'friends' ); ?></h1>
+	<h1><?php esc_html_e( 'Fraidyscrape Tester', 'friends' ); ?></h1>
+	<p><?php esc_html_e( 'Here you can test what the parser makes of the URL you give it. ', 'friends' ); ?></h1>
 
 	<form>
 		<input type="hidden" name="page" value="<?php echo esc_attr( $_GET['page'] ); ?>">
 		<?php wp_nonce_field( 'friends_parser_fraidyscrape_tester', '_wpnonce', false ); ?>
-		<label><?php _e( 'Enter a URL:', 'friends' ); ?> <input type="text" name="url" value="<?php echo esc_attr( $url ); ?>" placeholer="https://" autofocus /></label>
+		<label><?php esc_html_e( 'Enter a URL:', 'friends' ); ?> <input type="text" name="url" value="<?php echo esc_attr( $url ); ?>" placeholer="https://" autofocus /></label>
 		<input type="submit" class="button button-primary" value="<?php echo esc_attr_x( 'Parse Now', 'button', 'friends' ); ?>" />
 	</form>
 	<?php
 	if ( $url ) {
 		if ( ! class_exists( 'Friends_Feed_Parser_fraidyscrape' ) ) {
 			if ( ! class_exists( 'Friends_Feed_Parser' ) ) {
-				require_once __DIR__ . '/class-friends-feed-parser.php';
+				require_once __DIR__ . '/class-feed-parser.php';
 			}
 			if ( ! class_exists( 'Friends_Feed_Item' ) ) {
-				require_once __DIR__ . '/class-friends-feed-item.php';
+				require_once __DIR__ . '/class-feed-item.php';
 			}
-			require_once __DIR__ . '/class-friends-feed-parser-fraidyscrape.php';
+			require_once __DIR__ . '/class-feed-parser-fraidyscrape.php';
 		}
-		$parser = new Friends_Feed_Parser_fraidyscrape;
+		$parser = new Feed_Parser_Fraidyscrape;
 		$items = $parser->fetch_feed( $_GET['url'] );
 		?>
 		<h2>
@@ -175,7 +175,7 @@ function friends_parser_fraidyscrape_tester() {
 		</h2>
 		<?php
 		if ( ! is_wp_error( $items ) && empty( $items ) ) {
-			$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
+			$items = new \WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 		}
 
 		if ( is_wp_error( $items ) ) {
@@ -186,7 +186,7 @@ function friends_parser_fraidyscrape_tester() {
 			exit;
 		}
 		?>
-		<h3><?php _e( 'Items in the Feed', 'friends' ); ?></h3>
+		<h3><?php esc_html_e( 'Items in the Feed', 'friends' ); ?></h3>
 		<ul id="items">
 			<?php
 			foreach ( $items as $item ) {

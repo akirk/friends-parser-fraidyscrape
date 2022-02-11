@@ -7,11 +7,13 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
 /**
  * This class describes a friends feed parser.
  */
-abstract class Friends_Feed_Parser {
+abstract class Feed_Parser {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *

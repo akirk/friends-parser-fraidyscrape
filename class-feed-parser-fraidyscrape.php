@@ -7,6 +7,8 @@
  * @package Friends_Parser_Fraidyscrape
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Parser Fraidyscrape.
  *
@@ -15,7 +17,7 @@
  * @package Friends_Parser_Fraidyscrape
  * @author  Alex Kirk
  */
-class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
+class Feed_Parser_Fraidyscrape extends Feed_Parser {
 
 	const NAME = 'Fraidyscrape';
 	const URL  = 'https://github.com/akirk/friends-parser-fraidyscrape';
@@ -33,6 +35,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) {
 		$f = $this->get_fraidyscrape();
 		$tasks = $f->detect( $url );
+
 		if ( empty( $tasks ) ) {
 			return 0;
 		}
@@ -77,7 +80,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			return $feed_details;
 		}
 
-		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+		$host = parse_url( strtolower( $feed_details['url'] ), PHP_URL_HOST );
 
 		switch ( $host ) {
 			case 'twitter.com':
@@ -104,7 +107,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 		$req = true;
 		$feed = array();
 		while ( true ) {
-			$req = $f->nextRequest( $tasks );
+			$req = $f->next_request( $tasks );
 			if ( ! $req ) {
 				break;
 			}
@@ -126,7 +129,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 
 					set_site_transient( $cache_key, $res, $expiration );
 				} elseif ( apply_filters( 'friends_debug', false ) ) {
-					echo 'using cache for ', $req['url'], '<br>';
+					echo 'using cache for ', esc_html( $req['url'] ), '<br/>';
 				}
 
 				$cookies = wp_remote_retrieve_cookies( $res );
@@ -134,7 +137,7 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 				$obj = $f->scrape( $tasks, $req, $res );
 			}
 
-			if ( isset( $obj['out']) ) {
+			if ( isset( $obj['out'] ) ) {
 				$feed = $obj['out'];
 			}
 		}
@@ -144,14 +147,15 @@ class Friends_Feed_Parser_Fraidyscrape extends Friends_Feed_Parser {
 			if ( empty( $item['url'] ) ) {
 				continue;
 			}
-			$feed_item = new Friends_Feed_Item(
+			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item['url'],
 					'title'     => $item['title'] ?? '',
 					'content'   => implode( PHP_EOL, $item['text'] ?? array() ),
 				)
 			);
-			if ( $item['publishedAt'] instanceof DateTime ) {
+
+			if ( isset( $item['publishedAt'] ) && $item['publishedAt'] instanceof \DateTime ) {
 				$feed_item->date = $item['publishedAt']->format( 'Y-m-d H:i:s' );
 			}
 

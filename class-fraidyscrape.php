@@ -49,7 +49,7 @@ class Functions {
 	}
 
 	public static function endsWith( $haystack, $needle ) {
-	    return substr( $haystack, - strlen( $needle ) ) === $needle;
+		return substr( $haystack, - strlen( $needle ) ) === $needle;
 	}
 
 	public static function transformXpath( $path ) {
@@ -59,11 +59,11 @@ class Functions {
 		return $path;
 	}
 
-	public static function jsonPath( $obj, $path, $asText ) {
-		$jsonObject = new jsonObject( $obj );
-		$r = $jsonObject->get( $path );
+	public static function jsonPath( $obj, $path, $as_text ) {
+		$json_object = new jsonObject( $obj );
+		$r = $json_object->get( $path );
 
-		if ( $asText ) {
+		if ( $as_text ) {
 			return array_shift( $r );
 		}
 
@@ -77,7 +77,7 @@ class Scraper {
 		$this->defs = $defs;
 	}
 
-	private function normalizeUrl( $link ) {
+	private function normalize_url( $link ) {
 		$url = Uri\normalize( $link );
 		$protocol = strpos( $url, '://' );
 
@@ -107,7 +107,7 @@ class Scraper {
 							if ( preg_match( '/^\d{14,}/', $val ) ) {
 								$val = substr( $val, 0, 4 ) . '-' . substr( $val, 4, 2 ) . '-' . substr( $val, 6, 2 ) . ' ' . substr( $val, 8, 2 ) . ':' . substr( $val, 10, 2 ) . ':' . substr( $val, 12, 2 ) . 'Z';
 							} elseif ( preg_match( '/^\w+\s+\d{1,2}[a-z]*$/', $val ) ) {
-								$val = $val . ', ' . date( 'Y' );
+								$val = $val . ', ' . gmdate( 'Y' );
 							}
 						}
 						if ( $val ) {
@@ -140,7 +140,7 @@ class Scraper {
 				$subkeys = array_reverse( explode( ':', $id ) );
 				$id = array_shift( $subkeys );
 				foreach ( $subkeys as $key ) {
-					if ( ! isset( $node[ $key ] )  ) {
+					if ( ! isset( $node[ $key ] ) ) {
 						$node[ $key ] = array();
 					}
 					$node = &$node[ $key ];
@@ -154,7 +154,7 @@ class Scraper {
 	}
 
 	public function detect( $url ) {
-		$norm = $this->normalizeUrl( $url );
+		$norm = $this->normalize_url( $url );
 		$queue = array( 'default' );
 		$vars = array(
 			'url' => $url,
@@ -180,7 +180,7 @@ class Scraper {
 								$argument['var'] => $match[ $i ],
 							),
 							$vars,
-							isset( $argument->mod ) ? $argument->mod : null,
+							isset( $argument['mod'] ) ? $argument['mod'] : null,
 							true
 						);
 					}
@@ -197,28 +197,28 @@ class Scraper {
 
 		return (object) array(
 			'queue' => $queue,
-			'vars' => $vars,
+			'vars'  => $vars,
 		);
 	}
 
-	public function nextRequest( $tasks ) {
+	public function next_request( $tasks ) {
 		if ( empty( $tasks->queue ) ) {
 			return;
 		}
 
 		$id = array_shift( $tasks->queue );
-		$req = $this->setupRequest( $tasks, $this->defs[ $id ] );
+		$req = $this->setup_request( $tasks, $this->defs[ $id ] );
 		$req['id'] = $id;
 
 		return $req;
 	}
 
-	public function setupRequest( $tasks, $req ) {
+	public function setup_request( $tasks, $req ) {
 		$options = $this->assign(
 			array(),
 			array(
-				'url' => ! empty( $req['url'] ) ? $req['url'] : $tasks->vars['url'],
-				'headers' => array(),
+				'url'         => ! empty( $req['url'] ) ? $req['url'] : $tasks->vars['url'],
+				'headers'     => array(),
 				'credentials' => 'omit',
 			),
 			$tasks->vars,
@@ -242,17 +242,17 @@ class Scraper {
 			unset( $options['query'] );
 		}
 
-		return 	array(
-			'url' => Uri\build( $url ),
+		return  array(
+			'url'     => Uri\build( $url ),
 			'options' => $options,
-			'render' => ! empty( $req['render'] ) ? $req['render'] : null,
+			'render'  => ! empty( $req['render'] ) ? $req['render'] : null,
 		);
 	}
 
-	public function parseHtml( $str, $mime_type ) {
+	public function parse_html( $str, $mime_type ) {
 		$dom = new \DOMDocument();
 		if ( false !== strpos( $mime_type, 'html' ) ) {
-			@$dom->loadHtml( $str );
+			$dom->loadHtml( $str, LIBXML_NOERROR );
 		} else {
 			$dom->loadXml( $str );
 		}
@@ -276,29 +276,28 @@ class Scraper {
 				$tasks->vars['doc'] = array( 'list' => $tasks->vars['doc'] );
 			}
 			$mime = 'application/json';
-		} elseif ( preg_match( '/^\s*</m',  $body ) ) {
-		    // The [\s\S] matches ANY char - while the dot (,) doesn't match newlines
+		} elseif ( preg_match( '/^\s*</m', $body ) ) {
+			// The [\s\S] matches ANY char - while the dot (,) doesn't match newlines
 			if ( preg_match( '/^\s*<\?xml\s+[\s\S]+<(rss|atom)/i', $body ) ) {
 				$mime = 'text/xml';
 			}
-			$tasks->vars['doc'] = $this->parseHtml( $body, $mime );
+			$tasks->vars['doc'] = $this->parse_html( $body, $mime );
 		} else {
 			$mime = 'text/plain';
 			$tasks->vars['doc'] = $body;
 		}
 		$tasks->vars['mime'] = $mime;
 
-
-		$vars = $this->scanSite( $tasks->vars, $site, $tasks->vars['doc'] );
+		$vars = $this->scan_site( $tasks->vars, $site, $tasks->vars['doc'] );
 		unset( $tasks->vars['doc'] );
 		return $vars;
 	}
 
-	public function scanSite( &$vars, $site, $obj ) {
+	public function scan_site( &$vars, $site, $obj ) {
 		$swap = array( 'namespaces', 'rules' );
 		foreach ( $swap as $k ) {
-			if ( isset( $site[$k] ) ) {
-				$vars[$k] = $site[$k];
+			if ( isset( $site[ $k ] ) ) {
+				$vars[ $k ] = $site[ $k ];
 			}
 		}
 
@@ -309,14 +308,14 @@ class Scraper {
 
 	public function scan( &$vars, $site, $obj ) {
 		$script = null;
-		$fn = function ( $path, $asText ) use ( $obj ) {
+		$fn = function ( $path, $as_text ) use ( $obj ) {
 			$path = str_replace( array( '===', '!==' ), array( '==', '!=' ), $path );
-			return Functions::jsonPath( $obj, $path, $asText );
+			return Functions::jsonPath( $obj, $path, $as_text );
 		};
 
 		if ( isset( $site['accept'] ) ) {
 			foreach ( $site['accept'] as $accept ) {
-				$this->scanSite( $vars, $this->defs[ $accept ], $obj );
+				$this->scan_site( $vars, $this->defs[ $accept ], $obj );
 				if ( isset( $vars['out'] ) ) {
 					break;
 				}
@@ -328,46 +327,43 @@ class Scraper {
 				$obj = json_decode( $obj );
 			} elseif ( ! isset( $vars['mime'] ) ) {
 				$vars['mime'] = 'application/json';
-			} elseif ( $vars['mime'] !== 'application/json' ) {
+			} elseif ( 'application/json' !== $vars['mime'] ) {
 				return $vars;
 			}
 			$script = $site['acceptJson'];
 		} elseif ( isset( $site['acceptText'] ) ) {
-			// if (obj.innerText) {
-			// 	obj = obj.innerText
-			// }
 			if ( is_string( $obj ) && ! isset( $vars['mime'] ) ) {
 				$vars['mime'] = 'text/plain';
-			} elseif ( $vars['mime'] !== 'text/plain' ) {
+			} elseif ( 'text/plain' !== $vars['mime'] ) {
 				return $vars;
 			}
 			$obj = strval( $obj );
 			$script = $site['acceptText'];
-			$fn = function ( $path, $asText ) use ( $obj ) {
-				if ( $asText ) {
-					if ( preg_match( '/' . preg_quote( $path, '/' ) . '/m', $match ) ) {
+			$fn = function ( $path, $as_text ) use ( $obj ) {
+				if ( $as_text ) {
+					if ( preg_match( '/' . preg_quote( $path, '/' ) . '/m', $obj, $match ) ) {
 						return isset( $match[1] ) ? $match[1] : $obj;
 					}
 					return null;
 				}
 
-				preg_match_all( '/' . preg_quote( $path, '/' ) . '/m', $matches, PREG_SET_ORDER );
+				preg_match_all( '/' . preg_quote( $path, '/' ) . '/m', $obj, $matches, PREG_SET_ORDER );
 				return $matches;
 			};
 		} elseif ( isset( $site['acceptHtml'] ) || isset( $site['acceptXml'] ) ) {
-			if ( is_string( $obj ) || ! isset( $vars['mime' ]) ) {
+			if ( is_string( $obj ) || ! isset( $vars['mime'] ) ) {
 				$vars['mime'] = isset( $site['acceptHtml'] ) ? 'text/html' : 'text/xml';
-			} elseif ( $vars['mime'] === 'application/json' ) {
+			} elseif ( 'application/json' === $vars['mime'] ) {
 				return $vars;
 			}
 			$script = isset( $site['acceptHtml'] ) ? $site['acceptHtml'] : $site['acceptXml'];
-			$fn = function ( $path, $asText ) use ( $obj, $vars ) {
+			$fn = function ( $path, $as_text ) use ( $obj, $vars ) {
 				if ( ! is_array( $path ) ) {
-				  $path = array( $path );
+					$path = array( $path );
 				}
 
 				$xpath = new \DomXPath( $vars['doc'] );
-				if ( is_array( $vars['namespaces'] ) ) {
+				if ( isset( $vars['namespaces'] ) && is_array( $vars['namespaces'] ) ) {
 					foreach ( $vars['namespaces'] as $prefix => $namespace ) {
 						$xpath->registerNamespace( $prefix, $namespace );
 					}
@@ -375,7 +371,7 @@ class Scraper {
 
 				foreach ( $path as $p ) {
 					$p = Functions::transformXpath( $p );
-					$list = array(); // Reset to array in case it was an empty DOMNodeList
+					$list = array(); // Reset to array in case it was an empty DOMNodeList.
 					if ( $obj instanceof \DOMNodeList ) {
 						foreach ( $obj as $node ) {
 							$domnodelist = $xpath->query( $p, $node );
@@ -395,10 +391,10 @@ class Scraper {
 				}
 
 				if ( 0 === count( $list ) ) {
-					return $asText ? '' : array();
+					return $as_text ? '' : array();
 				}
 
-				if ( $asText ) {
+				if ( $as_text ) {
 					$domlist = $list;
 					$list = array();
 					foreach ( $domlist as $v ) {
@@ -433,7 +429,7 @@ class Scraper {
 					$vars['index'] = $i;
 					$this->scan( $vars, $site, $el );
 					if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
-						if ( isset($vars['out'] ) ) {
+						if ( isset( $vars['out'] ) ) {
 							$out[] = $vars['out'];
 						}
 					}
@@ -441,7 +437,6 @@ class Scraper {
 				if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
 					$vars['out'] = $out;
 				}
-
 			} elseif ( $fn ) {
 				$this->scanScript( $vars, $script, $obj, $fn );
 			}
@@ -450,12 +445,12 @@ class Scraper {
 		return $vars;
 	}
 
-	public function scanScript( & $vars, $script, $node, $pathFn ) {
+	public function scanScript( &$vars, $script, $node, $path_fn ) {
 		foreach ( $script as $cmd ) {
 			if ( isset( $cmd['rule'] ) ) {
 				$rule = isset( $vars['rules'][ $cmd['rule'] ] ) ? $vars['rules'][ $cmd['rule'] ] : null;
 				if ( $rule ) {
-					$this->scanScript( $vars, $rule, $node, $pathFn );
+					$this->scanScript( $vars, $rule, $node, $path_fn );
 				}
 			}
 
@@ -474,15 +469,15 @@ class Scraper {
 					continue;
 				}
 
-				$hasChildren = isset( $cmd['acceptJson'] ) || isset( $cmd['acceptText'] ) || isset( $cmd['acceptHtml'] ) || isset( $cmd['acceptXml'] ) || isset( $cmd['patch'] ) || isset( $cmd['use'] );
-				$asText = ! $hasChildren && ! ( is_array( $cmd ) && isset( $cmd['match'] ) );
+				$has_children = isset( $cmd['acceptJson'] ) || isset( $cmd['acceptText'] ) || isset( $cmd['acceptHtml'] ) || isset( $cmd['acceptXml'] ) || isset( $cmd['patch'] ) || isset( $cmd['use'] );
+				$as_text = ! $has_children && ! ( is_array( $cmd ) && isset( $cmd['match'] ) );
 
 				if ( '=' === $op[0] ) {
 					$val = substr( $op, 1 );
 				} elseif ( '&' === $op[0] ) {
-					$val = Functions::jsonPath( $vars, '$' . substr( $op, 1 ), $asText );
+					$val = Functions::jsonPath( $vars, '$' . substr( $op, 1 ), $as_text );
 				} else {
-					$val = $pathFn( $op, $asText );
+					$val = $path_fn( $op, $as_text );
 				}
 
 				if ( is_array( $cmd ) && isset( $cmd['match'] ) ) {
@@ -493,13 +488,13 @@ class Scraper {
 					}
 				}
 
-				if ( isset( $cmd['use'] ) && isset( $this->defs[ $cmd['use'] ] ) && strlen( $val ) > 0 ) {
+				if ( isset( $cmd['use'] ) && isset( $this->defs[ $cmd['use'] ] ) && $val ) {
 					$use = $this->defs[ $cmd['use'] ];
-					return $this->scanSite( $vars, $use, $node );
+					return $this->scan_site( $vars, $use, $node );
 				}
 
 				// If there is a nested ruleset, process it.
-				if ( $hasChildren ) {
+				if ( $has_children ) {
 					$v = $vars;
 					if ( isset( $cmd['var'] ) ) {
 						if ( '*' !== $cmd['var'] ) {
