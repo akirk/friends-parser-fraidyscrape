@@ -51,17 +51,7 @@ class Feed_Parser_Fraidyscrape extends Feed_Parser {
 
 		if ( ! isset( $fraidyscrape ) ) {
 			include_once __DIR__ . '/class-fraidyscrape.php';
-			$cache_key = 'friends_parser_fraidyscrape_social_json_v1';
-			$social_json = get_site_transient( $cache_key );
-			if ( ! $social_json ) {
-				$social_json = file_get_contents( __DIR__ . '/social.json' );
-				$res = wp_safe_remote_get( 'https://fraidyc.at/defs/social.json' );
-				if ( 200 === wp_remote_retrieve_response_code( $res ) ) {
-					$social_json = wp_remote_retrieve_body( $res );
-				}
-				set_site_transient( $cache_key, $social_json, 86400 );
-			}
-
+			$social_json = file_get_contents( __DIR__ . '/social.json' );
 			$defs = json_decode( $social_json, true );
 			$fraidyscrape = new \Fraidyscrape\Scraper( $defs );
 		}
@@ -141,17 +131,24 @@ class Feed_Parser_Fraidyscrape extends Feed_Parser {
 				$feed = $obj['out'];
 			}
 		}
-
+		if ( isset( $feed['posts'] ) ) {
+			$feed = $feed['posts'];
+		}
 		$feed_items = array();
 		foreach ( $feed as $item ) {
 			if ( empty( $item['url'] ) ) {
 				continue;
 			}
+			$content = $item['html'] ?? $item['text'] ?? array();
+			if ( is_array( $content ) ) {
+				$content = implode( PHP_EOL, $content );
+			}
 			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item['url'],
 					'title'     => $item['title'] ?? '',
-					'content'   => implode( PHP_EOL, $item['text'] ?? array() ),
+					'author'    => $item['author'] ?? '',
+					'content'   => $content,
 				)
 			);
 

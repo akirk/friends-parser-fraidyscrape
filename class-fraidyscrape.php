@@ -64,6 +64,9 @@ class Functions {
 		$r = $json_object->get( $path );
 
 		if ( $as_text ) {
+			if ( ! is_array( $r ) ) {
+				return null;
+			}
 			return array_shift( $r );
 		}
 
@@ -111,7 +114,11 @@ class Scraper {
 							}
 						}
 						if ( $val ) {
-							$val = new \DateTime( $val );
+							if ( is_int( $val ) ) {
+								$val = ( new \DateTime() )->setTimestamp( $val );
+							} else {
+								$val = new \DateTime( $val );
+							}
 						}
 					} elseif ( 'int' === $trans ) {
 						$val = intval( $val );
@@ -125,8 +132,16 @@ class Scraper {
 						$val = urlencode( $val );
 					} elseif ( 'html-to-text' === $trans ) {
 						$val = html_entity_decode( $val );
-					} elseif ( 0 === strpos( '*', $trans ) ) {
+					} elseif ( 0 === strpos( $trans, '*' ) ) {
 						$val *= intval( substr( $trans, 1 ) );
+					} elseif ( 0 === strpos( $trans, 's/' ) ) {
+						$parts = explode( '/', $trans );
+						$search = $parts[1];
+						$replace = $parts[2];
+						if ( $search === '(.*)' ) {
+							$search = '^(.*)$';
+						}
+						$val = preg_replace( '/^' . $search . '$/', $replace, $val );
 					} elseif ( 'lowercase' === $trans ) {
 						$val = strtolower( $val );
 					} elseif ( 'uppercase' === $trans ) {
@@ -425,12 +440,14 @@ class Scraper {
 				if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
 					unset( $vars['out'] );
 				}
+
 				foreach ( $obj as $i => $el ) {
 					$vars['index'] = $i;
 					$this->scan( $vars, $site, $el );
 					if ( ! isset( $site['var'] ) || '*' !== $site['var'] ) {
 						if ( isset( $vars['out'] ) ) {
 							$out[] = $vars['out'];
+							unset( $vars['out'] );
 						}
 					}
 				}
@@ -465,6 +482,7 @@ class Scraper {
 
 			foreach ( $ops as $op ) {
 				$op = Functions::varx( $op, $vars );
+
 				if ( ! $op ) {
 					continue;
 				}
@@ -505,8 +523,7 @@ class Scraper {
 					}
 
 					if ( $val ) {
-						$v = $this->scan( $vars, $cmd, $val );
-
+						$this->scan( $vars, $cmd, $val );
 						if ( isset( $cmd['var'] ) && '*' !== $cmd['var'] ) {
 							$val = $vars['out'];
 							$vars = $v;
