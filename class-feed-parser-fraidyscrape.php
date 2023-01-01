@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends_Parser_Fraidyscrape
  * @author  Alex Kirk
  */
-class Feed_Parser_Fraidyscrape extends Feed_Parser {
+class Feed_Parser_Fraidyscrape extends Feed_Parser_V2 {
 
 	const NAME = 'Fraidyscrape';
 	const URL  = 'https://github.com/akirk/friends-parser-fraidyscrape';
@@ -84,11 +84,12 @@ class Feed_Parser_Fraidyscrape extends Feed_Parser {
 	/**
 	 * Fetches a feed and returns the processed items.
 	 *
-	 * @param string $url The url.
+	 * @param      string    $url        The url.
+	 * @param      User_Feed $user_feed  The user feed.
 	 *
-	 * @return array            An array of feed items.
+	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url ) {
+	public function fetch_feed( $url, User_Feed $user_feed = null ) {
 		$f = $this->get_fraidyscrape();
 		$tasks = $f->detect( $url );
 

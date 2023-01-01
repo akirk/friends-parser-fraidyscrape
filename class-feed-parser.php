@@ -13,7 +13,7 @@ namespace Friends;
 /**
  * This class describes a friends feed parser.
  */
-abstract class Feed_Parser {
+abstract class Feed_Parser_V2 {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
@@ -96,12 +96,12 @@ abstract class Feed_Parser {
 	 *      ),
 	 *  );
 	 *
-	 * @param      string $url        The url.
+	 * @param      string    $url        The url.
+	 * @param      User_Feed $user_feed  The user feed.
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url ) {
+	public function fetch_feed( $url, User_Feed $user_feed = null ) {
 		return array();
 	}
 }
-

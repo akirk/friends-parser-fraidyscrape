@@ -4,6 +4,7 @@
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
  * Version: 1.2
+ * Requires Plugins: friends
  *
  * Description: Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).
  *
@@ -164,7 +165,7 @@ function friends_parser_fraidyscrape_tester() {
 			}
 			require_once __DIR__ . '/class-feed-parser-fraidyscrape.php';
 		}
-		$parser = new Feed_Parser_Fraidyscrape;
+		$parser = new Friends\Feed_Parser_Fraidyscrape;
 		$items = $parser->fetch_feed( $_GET['url'] );
 		?>
 		<h2>

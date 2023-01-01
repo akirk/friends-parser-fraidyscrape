@@ -138,7 +138,7 @@ class Scraper {
 						$parts = explode( '/', $trans );
 						$search = $parts[1];
 						$replace = $parts[2];
-						if ( $search === '(.*)' ) {
+						if ( '(.*)' === $search ) {
 							$search = '^(.*)$';
 						}
 						$val = preg_replace( '/^' . $search . '$/', $replace, $val );
@@ -267,7 +267,7 @@ class Scraper {
 	public function parse_html( $str, $mime_type ) {
 		$dom = new \DOMDocument();
 		if ( false !== strpos( $mime_type, 'html' ) ) {
-			$dom->loadHtml( $str, LIBXML_NOERROR );
+			$dom->loadHtml( $str, \LIBXML_NOERROR );
 		} else {
 			$dom->loadXml( $str );
 		}
