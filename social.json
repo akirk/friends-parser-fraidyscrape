@@ -525,12 +525,12 @@
   },
 
   "tumblr.com:user": {
-    "match": "^www\\.tumblr\\.com\\/([\\-\\.\\w]+)(\\/|$)",
+    "match": "^([\\-\\.\\w]+)\\.tumblr\\.com(\\/|$)",
     "arguments": [0, {"var": "user"}],
     "url": "https://api.tumblr.com/v2/blog/$user.tumblr.com/posts",
     "rules": {
       "entry": [
-        {"var": "id",                "op": ["$.id", "$.id_string"]},
+        {"var": "id",                "op": ["$.trail[0].post.id", "$.id_string"]},
         {"var": "author",            "op": ["$.trail[0].blog.name", "$.blog_name"]},
         {"var": "out:title",         "op": ["$.title", "$.summary", "$.date"], "mod": ["str"]},
         {"var": "out:author",        "op": "=$author"},
@@ -540,7 +540,7 @@
           {"var": "image",           "op": "$.media[0].url", "mod": ["s/(.*)/<img src=\"$1\">/"]},
           {"var": "out:html",        "op": "=${out:html}<p>$text$image</p>"}
         ]},
-        {"var": "out:url",           "op": "$.post_url" },
+        {"var": "out:url",           "op": "=https://$author.tumblr.com/post/$id", "mod": ["url"]},
         {"var": "out:publishedAt",   "op": "$.timestamp",
           "mod": ["int", "*1000", "date"]}
       ]
