@@ -160,11 +160,11 @@ function friends_parser_fraidyscrape_tester() {
 			if ( ! class_exists( 'Friends\Feed_Parser' ) ) {
 				require_once __DIR__ . '/class-feed-parser.php';
 			}
+			if ( ! class_exists( 'Friends\Feed_Parser_V2' ) ) {
+				require_once __DIR__ . '/class-feed-parser-v2.php';
+			}
 			if ( ! class_exists( 'Friends\Feed_Item' ) ) {
 				require_once __DIR__ . '/class-feed-item.php';
-			}
-			if ( ! class_exists( 'Friends\Feed_Item_V2' ) ) {
-				require_once __DIR__ . '/class-feed-item-v2.php';
 			}
 			require_once __DIR__ . '/class-feed-parser-fraidyscrape.php';
 		}
@@ -194,6 +194,9 @@ function friends_parser_fraidyscrape_tester() {
 		<ul id="items">
 			<?php
 			foreach ( $items as $item ) {
+				if ( ! $item->title ) {
+					$item->title = strip_tags( $item->content );
+				}
 				?>
 				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
 				<?php

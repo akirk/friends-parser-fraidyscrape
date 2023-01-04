@@ -25,7 +25,7 @@ This plugin is meant to be used with the [Friends plugin](https://github.com/aki
 ## Changelog
 
 ### 1.3
-- Update to the Feed_Item_V2 interface.
+- Update to the Feed_Parser_V2 interface.
 
 ### 1.2
 - Update for Friends 2.0
