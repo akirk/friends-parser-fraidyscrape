@@ -217,17 +217,17 @@ add_action(
 				'friends',
 				__( 'Fraidyscrape', 'friends' ),
 				__( 'Fraidyscrape', 'friends' ),
-				'administrator',
+				'edit_private_posts',
 				'friends-fraidyscrape',
 				'friends_parser_fraidyscrape_about_page'
 			);
 		} else {
-			add_menu_page( 'friends', __( 'Friends', 'friends' ), 'administrator', 'friends', null, 'dashicons-groups', 3 );
+			add_menu_page( 'friends', __( 'Friends', 'friends' ), 'edit_private_posts', 'friends', null, 'dashicons-groups', 3 );
 			add_submenu_page(
 				'friends',
 				__( 'About', 'friends' ),
 				__( 'About', 'friends' ),
-				'administrator',
+				'edit_private_posts',
 				'friends',
 				'friends_parser_fraidyscrape_about_page_with_friends_about'
 			);
@@ -238,7 +238,7 @@ add_action(
 				'friends',
 				__( 'Fraidyscrape Tester', 'friends' ),
 				__( 'Fraidyscrape Tester', 'friends' ),
-				'administrator',
+				'edit_private_posts',
 				'friends-fraidyscrape-tester',
 				'friends_parser_fraidyscrape_tester'
 			);
