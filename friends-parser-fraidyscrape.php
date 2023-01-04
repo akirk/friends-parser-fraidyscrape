@@ -3,7 +3,7 @@
  * Plugin name: Friends Parser Fraidyscrape
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends-parsers-fraidyscrape
- * Version: 1.2
+ * Version: 1.3
  * Requires Plugins: friends
  *
  * Description: Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).
@@ -156,12 +156,15 @@ function friends_parser_fraidyscrape_tester() {
 	</form>
 	<?php
 	if ( $url ) {
-		if ( ! class_exists( 'Friends_Feed_Parser_fraidyscrape' ) ) {
-			if ( ! class_exists( 'Friends_Feed_Parser' ) ) {
+		if ( ! class_exists( 'Friends\Feed_Parser_fraidyscrape' ) ) {
+			if ( ! class_exists( 'Friends\Feed_Parser' ) ) {
 				require_once __DIR__ . '/class-feed-parser.php';
 			}
-			if ( ! class_exists( 'Friends_Feed_Item' ) ) {
+			if ( ! class_exists( 'Friends\Feed_Item' ) ) {
 				require_once __DIR__ . '/class-feed-item.php';
+			}
+			if ( ! class_exists( 'Friends\Feed_Item_V2' ) ) {
+				require_once __DIR__ . '/class-feed-item-v2.php';
 			}
 			require_once __DIR__ . '/class-feed-parser-fraidyscrape.php';
 		}
