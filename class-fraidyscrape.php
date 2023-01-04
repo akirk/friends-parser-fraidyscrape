@@ -30,7 +30,7 @@ class Functions {
 		}
 
 		$str = preg_replace_callback(
-			'/\${(.+)}/',
+			'/\\\${(.+)}/',
 			function ( $x ) use ( $vars ) {
 				$v = self::varx( $x[1], $vars );
 				return self::varr( $vars, $v );
