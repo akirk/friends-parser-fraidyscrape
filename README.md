@@ -26,6 +26,7 @@ This plugin is meant to be used with the [Friends plugin](https://github.com/aki
 
 ### 1.3
 - Update to the Feed_Parser_V2 interface.
+- Reduce required priviledges, see https://github.com/akirk/friends/pull/121.
 
 ### 1.2
 - Update for Friends 2.0
